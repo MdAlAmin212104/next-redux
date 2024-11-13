@@ -1,25 +1,54 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
-import { getPosts } from "./postApi"
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { getPosts } from './postApi';
 
-export interface CounterState {
-    value: number
+// Define the post type based on the data structure returned by getPosts
+interface Post {
+    id: number;
+    title: string;
+    content: string;
+    // Add other fields based on your data structure
 }
-export const fetchTodo = createAsyncThunk('posts/fetchTodo', async () => {
-    const response = await getPosts()
-    return response.todo
-  })
 
-const initialState: CounterState = {
-    value: 0,
+// Define the state type
+interface PostState {
+    isError: boolean;
+    isLoading: boolean;
+    data: Post[];
 }
+
+// Fetch posts with a typed response
+export const fetchPosts = createAsyncThunk<Post[]>('posts/fetchPosts', async () => {
+    const posts = await getPosts();
+    return posts;
+});
+
+// Define the initial state
+const initialState: PostState = {
+    isError: false,
+    isLoading: false,
+    data: []
+};
 
 const postSlice = createSlice({
     name: 'post',
     initialState,
-    reducers: {
+    reducers: {},
+    extraReducers: (builder) => {
+        builder
+            .addCase(fetchPosts.pending, (state) => {
+                state.isError = false;
+                state.isLoading = true;
+            })
+            .addCase(fetchPosts.fulfilled, (state, action: PayloadAction<Post[]>) => {
+                state.isLoading = false;
+                state.isError = false;
+                state.data = action.payload;
+            })
+            .addCase(fetchPosts.rejected, (state) => {
+                state.isLoading = false;
+                state.isError = true;
+            });
+    }
+});
 
-    },
-    extraReducers = builder ((build) => {
-        build.addCase('')
-    })
-})
+export default postSlice.reducer;
